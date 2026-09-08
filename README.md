@@ -88,7 +88,7 @@ Análise do portfólio considerando receita, volume e rentabilidade, incluindo u
 
 ![Dashboard - Produtos e Categorias](docs/produtos-categorias.png)
 
---
+---
 
 ## 🔎 Principais Insights
 
