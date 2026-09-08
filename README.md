@@ -62,56 +62,33 @@ performance-vendas-marketing/
 
 ## 📈 Dashboard Power BI
 
-O dashboard foi dividido em quatro páginas analíticas:
+O dashboard foi desenvolvido em quatro páginas analíticas, cada uma direcionada a uma perspectiva do negócio.
 
 ### 1. Visão Geral
 
-Apresenta os principais indicadores da operação, incluindo:
+Visão consolidada dos principais indicadores da operação, permitindo acompanhar receita, margem, investimento em marketing, conversões e ROAS.
 
-- Receita
-- Margem Bruta
-- Investimento em Marketing
-- Conversões
-- ROAS
-
-Também permite acompanhar a evolução da receita e do investimento em marketing ao longo do tempo.
+![Dashboard - Visão Geral](docs/visao-geral.png)
 
 ### 2. Marketing
 
-Análise da eficiência das campanhas e dos canais de marketing.
+Análise do desempenho das campanhas e da eficiência dos canais de marketing, considerando investimento, receita atribuída, ROAS, conversões e custo por lead.
 
-Principais indicadores:
-
-- Investimento em Marketing
-- Receita Atribuída
-- ROAS
-- Conversões
-- Custo por Lead
+![Dashboard - Marketing](docs/marketing.png)
 
 ### 3. Vendas e Clientes
 
-Análise do desempenho comercial, clientes e distribuição geográfica das vendas.
+Análise do desempenho comercial, evolução da receita, distribuição geográfica das vendas e principais clientes.
 
-Principais indicadores:
-
-- Receita
-- Quantidade Vendida
-- Ticket Médio
-- Clientes Ativos
-- Margem Bruta
+![Dashboard - Vendas e Clientes](docs/vendas-clientes.png)
 
 ### 4. Produtos e Categorias
 
-Análise do portfólio de produtos considerando receita, volume e rentabilidade.
+Análise do portfólio considerando receita, volume e rentabilidade, incluindo uma matriz para classificação dos produtos em Estratégico, Otimização, Oportunidade e Avaliação.
 
-Foi utilizada uma matriz de produtos para classificar os itens em:
+![Dashboard - Produtos e Categorias](docs/produtos-categorias.png)
 
-- Estratégico
-- Otimização
-- Oportunidade
-- Avaliação
-
----
+--
 
 ## 🔎 Principais resultados
 
