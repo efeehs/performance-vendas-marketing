@@ -90,16 +90,35 @@ Análise do portfólio considerando receita, volume e rentabilidade, incluindo u
 
 --
 
-## 🔎 Principais resultados
+## 🔎 Principais Insights
 
-Alguns dos resultados identificados no projeto:
+A análise dos dados permitiu identificar alguns pontos relevantes sobre o desempenho da operação:
 
-- Receita total de aproximadamente **R$ 99,4 milhões**
-- Margem bruta geral de **28,81%**
-- **Whisky** como categoria de maior receita
-- **Food Service** como principal canal de vendas
-- **Instagram** como canal de marketing com maior ROAS
-- Os 10 produtos de maior receita representam aproximadamente **31,6% do faturamento total**
+###  Whisky lidera o faturamento
+
+A categoria **Whisky** apresentou aproximadamente **R$ 28,1 milhões em receita**, sendo a categoria de maior faturamento. Além disso, sua margem bruta de **30,79%** ficou acima da margem geral da operação, de **28,81%**.
+
+### Food Service é o principal canal de vendas
+
+O canal **Food Service** concentrou aproximadamente **R$ 41 milhões em receita**, apresentando o maior faturamento entre os canais analisados.
+
+### Instagram apresenta a maior eficiência de marketing
+
+Entre os canais de marketing, o **Instagram apresentou o maior ROAS, de 16,45**, com aproximadamente **R$ 7,0 milhões em receita atribuída** para cerca de **R$ 426 mil investidos**.
+
+Isso indica maior eficiência na geração de receita atribuída por real investido entre os canais analisados.
+
+### Existe concentração relevante nos produtos líderes
+
+Os **10 produtos de maior receita representam 31,58% do faturamento total**, equivalente a aproximadamente **R$ 31 milhões**.
+
+Entre esses produtos, **8 foram classificados como Estratégicos**, combinando alto faturamento e margem acima da referência, enquanto **2 foram classificados como Otimização**, por apresentarem alto faturamento, mas margem inferior.
+
+### Categorias com oportunidade de investigação
+
+Apesar do alto faturamento, **Vinho apresenta margem bruta de 27,30%**, abaixo da margem geral de 28,81%.
+
+Já **Cerveja Premium apresenta a menor margem entre as categorias, com 23,37%**, indicando um ponto de atenção para análises de preço, custos e composição do portfólio.
 
 ---
 
