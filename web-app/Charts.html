@@ -1,0 +1,288 @@
+<script>
+/**
+ * Chart Rendering Module using Chart.js
+ * Dashboard Web de Vendas e Marketing
+ */
+
+const ChartInstances = {};
+
+function destroyChart(canvasId) {
+  if (ChartInstances[canvasId]) {
+    ChartInstances[canvasId].destroy();
+    delete ChartInstances[canvasId];
+  }
+}
+
+// 1. Combo Chart: Evolução da Receita e Investimento em Marketing
+function renderComboRevenueInvestment(canvasId, monthlyData) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+
+  const labels = monthlyData.map(d => d.monthLabel);
+  const revenueData = monthlyData.map(d => d.revenue);
+  const spendData = monthlyData.map(d => d.spend);
+
+  ChartInstances[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          type: 'line',
+          label: 'Receita Total',
+          data: revenueData,
+          borderColor: '#0A2540',
+          backgroundColor: 'rgba(10, 37, 64, 0.08)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y'
+        },
+        {
+          type: 'bar',
+          label: 'Investimento Marketing',
+          data: spendData,
+          backgroundColor: '#D4AF37',
+          borderRadius: 4,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, font: { family: 'Inter', size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const val = ctx.raw || 0;
+              return `${ctx.dataset.label}: ${formatCurrency(val)}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          title: { display: true, text: 'Receita Total' },
+          ticks: { callback: value => 'R$ ' + (value/1000000).toFixed(1) + 'M' }
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: 'Investimento Marketing' },
+          ticks: { callback: value => 'R$ ' + (value/1000).toFixed(0) + 'k' }
+        }
+      }
+    }
+  });
+}
+
+// 2. Bar Chart Renderer (Horizontal or Vertical)
+function renderBarChart(canvasId, labels, dataValues, options = {}) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+
+  const isHorizontal = options.horizontal || false;
+  const isPercent = options.isPercent || false;
+  const refLineVal = options.refLine || null;
+
+  const datasets = [{
+    label: options.datasetLabel || 'Valor',
+    data: dataValues,
+    backgroundColor: options.color || '#0A2540',
+    borderRadius: 4
+  }];
+
+  const plugins = {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: function(ctx) {
+          const val = ctx.raw || 0;
+          return isPercent ? `Margem Bruta: ${formatPercent(val)}` : `${options.datasetLabel || 'Receita'}: ${formatCurrency(val)}`;
+        }
+      }
+    }
+  };
+
+  // Add reference line plugin if specified (e.g. 28.81% Margem Bruta Geral)
+  const extraPlugins = [];
+  if (refLineVal !== null) {
+    extraPlugins.push({
+      id: 'refLine',
+      afterDraw: (chart) => {
+        const { ctx, chartArea: { top, bottom, left, right }, scales: { x, y } } = chart;
+        const yScale = y;
+        const pixelVal = isHorizontal ? x.getPixelForValue(refLineVal) : y.getPixelForValue(refLineVal);
+        ctx.save();
+        ctx.strokeStyle = '#EF4444';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        if (isHorizontal) {
+          ctx.moveTo(pixelVal, top);
+          ctx.lineTo(pixelVal, bottom);
+        } else {
+          ctx.moveTo(left, pixelVal);
+          ctx.lineTo(right, pixelVal);
+        }
+        ctx.stroke();
+        ctx.fillStyle = '#EF4444';
+        ctx.font = 'bold 11px Inter';
+        ctx.fillText(`Média Geral: ${(refLineVal * 100).toFixed(2)}%`, isHorizontal ? pixelVal + 5 : right - 110, isHorizontal ? top + 15 : pixelVal - 6);
+        ctx.restore();
+      }
+    });
+  }
+
+  ChartInstances[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: labels, datasets: datasets },
+    plugins: extraPlugins,
+    options: {
+      indexAxis: isHorizontal ? 'y' : 'x',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: plugins,
+      scales: {
+        x: {
+          grid: { display: !isHorizontal },
+          ticks: isHorizontal
+            ? { callback: value => isPercent ? (value * 100).toFixed(0) + '%' : 'R$ ' + (value/1000000).toFixed(1) + 'M' }
+            : {}
+        },
+        y: {
+          grid: { display: isHorizontal },
+          ticks: !isHorizontal
+            ? { callback: value => isPercent ? (value * 100).toFixed(0) + '%' : 'R$ ' + (value/1000000).toFixed(1) + 'M' }
+            : {}
+        }
+      }
+    }
+  });
+}
+
+// 3. Line Chart Renderer (Evolução Temporal)
+function renderLineChart(canvasId, labels, dataValues, labelName = 'Valor', isCurrency = true, color = '#0A2540') {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+
+  ChartInstances[canvasId] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: labelName,
+        data: dataValues,
+        borderColor: color,
+        backgroundColor: color === '#0A2540' ? 'rgba(10, 37, 64, 0.05)' : 'rgba(212, 175, 55, 0.08)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const val = ctx.raw || 0;
+              return isCurrency ? `${labelName}: ${formatCurrency(val)}` : `${labelName}: ${formatDecimal(val, 2)}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          ticks: {
+            callback: value => isCurrency ? 'R$ ' + (value/1000000).toFixed(1) + 'M' : formatDecimal(value, 1)
+          }
+        }
+      }
+    }
+  });
+}
+
+// 4. Scatter / Bubble Chart: Receita x Margem Bruta x Volume por Produto
+function renderScatterChart(canvasId, productData) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+
+  // productData: array of { x: revenue, y: margin, r: scaled_radius, name, category, qty, grossProfit, class }
+  const datasets = [
+    {
+      label: 'Produtos',
+      data: productData,
+      backgroundColor: productData.map(p => {
+        if (p.class === 'Estratégico') return 'rgba(16, 185, 129, 0.7)';
+        if (p.class === 'Otimização') return 'rgba(245, 158, 11, 0.7)';
+        if (p.class === 'Oportunidade') return 'rgba(59, 130, 246, 0.7)';
+        return 'rgba(239, 68, 68, 0.7)';
+      }),
+      borderColor: productData.map(p => {
+        if (p.class === 'Estratégico') return '#065F46';
+        if (p.class === 'Otimização') return '#92400E';
+        if (p.class === 'Oportunidade') return '#1E40AF';
+        return '#991B1B';
+      }),
+      borderWidth: 1.5
+    }
+  ];
+
+  ChartInstances[canvasId] = new Chart(ctx, {
+    type: 'bubble',
+    data: { datasets: datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const p = ctx.raw;
+              return [
+                `Produto: ${p.name}`,
+                `Categoria: ${p.category}`,
+                `Classificação: ${p.class}`,
+                `Receita: ${formatCurrency(p.x)}`,
+                `Margem Bruta: ${formatPercent(p.y)}`,
+                `Qtd Vendida: ${formatNumber(p.qty)} un`,
+                `Lucro Bruto: ${formatCurrency(p.grossProfit)}`
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Receita Total (R$)', font: { weight: 'bold' } },
+          ticks: { callback: value => 'R$ ' + (value/1000000).toFixed(1) + 'M' }
+        },
+        y: {
+          title: { display: true, text: 'Margem Bruta (%)', font: { weight: 'bold' } },
+          ticks: { callback: value => (value * 100).toFixed(0) + '%' }
+        }
+      }
+    }
+  });
+}
+</script>

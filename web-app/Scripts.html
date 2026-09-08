@@ -1,0 +1,215 @@
+<script>
+/**
+ * Application Controller & State Engine
+ * Dashboard Web de Vendas e Marketing
+ */
+
+const AppState = {
+  activePage: 'visao-geral',
+  filters: {
+    year: '',
+    month: '',
+    startDate: '2024-01-01',
+    endDate: '2026-08-31',
+    category: '',
+    region: '',
+    salesChannel: '',
+    mktChannel: ''
+  }
+};
+
+// Global Data Store Helper
+function getRawData() {
+  return window.APP_DATA || { products: {}, customers: {}, campaigns: {}, sales: [], marketing: [] };
+}
+
+// Category matcher helper (handles singular/plural e.g. Vinho/Vinhos, Espumante/Espumantes)
+function matchCategory(filterCat, itemCat) {
+  if (!filterCat) return true;
+  if (!itemCat) return false;
+  const f = filterCat.toLowerCase().trim();
+  const i = itemCat.toLowerCase().trim();
+  if (f === i) return true;
+  if (f.startsWith(i) || i.startsWith(f)) return true;
+  return f.slice(0, 4) === i.slice(0, 4);
+}
+
+// Formatters
+function formatCurrency(num, compact = false) {
+  if (num === null || num === undefined || isNaN(num)) return 'R$ 0,00';
+  if (compact) {
+    if (Math.abs(num) >= 1000000) {
+      return 'R$ ' + (num / 1000000).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' mi';
+    } else if (Math.abs(num) >= 1000) {
+      return 'R$ ' + (num / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' mil';
+    }
+  }
+  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function formatPercent(num) {
+  if (num === null || num === undefined || isNaN(num)) return '0,00%';
+  return (num * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+}
+
+function formatNumber(num) {
+  if (num === null || num === undefined || isNaN(num)) return '0';
+  return Math.round(num).toLocaleString('pt-BR');
+}
+
+function formatDecimal(num, decimals = 2) {
+  if (num === null || num === undefined || isNaN(num)) return '0,00';
+  return num.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+// Filter Engine
+function getFilteredData() {
+  const data = getRawData();
+  const f = AppState.filters;
+
+  if (!data || !data.sales) {
+    return { sales: [], marketing: [], data: data };
+  }
+  
+  // Filter sales
+  // s: [ym, date, p_idx, c_idx, sc_idx, camp_idx, rev, cost, qty]
+  const filteredSales = data.sales.filter(s => {
+    const ym = s[0];
+    const dt = s[1];
+    const p_info = data.products[data.prod_list[s[2]]];
+    const c_info = data.customers[data.cli_list[s[3]]];
+    const sc_name = data.sc_list[s[4]];
+    const camp_id = s[5] >= 0 ? data.camp_list[s[5]] : null;
+    const mkt_channel_id = camp_id && data.campaigns[camp_id] ? data.campaigns[camp_id].channel_id : null;
+    const mkt_channel_name = mkt_channel_id ? (data.mc_list.find(m => m.toLowerCase().includes((data.mc_list[mkt_channel_id] || '')?.toLowerCase())) || '') : '';
+
+    // Period filter
+    if (f.year && !ym.startsWith(f.year)) return false;
+    if (f.month && ym.slice(5, 7) !== f.month) return false;
+    if (f.startDate && dt < f.startDate) return false;
+    if (f.endDate && dt > f.endDate) return false;
+
+    // Category filter
+    if (f.category && p_info && !matchCategory(f.category, p_info.category)) return false;
+
+    // Region filter
+    if (f.region && c_info && c_info.region !== f.region) return false;
+
+    // Sales Channel filter
+    if (f.salesChannel && sc_name !== f.salesChannel) return false;
+
+    // Marketing Channel filter
+    if (f.mktChannel) {
+      if (!mkt_channel_name) return false;
+      if (!mkt_channel_name.toLowerCase().includes(f.mktChannel.toLowerCase())) return false;
+    }
+
+    return true;
+  });
+
+  // Filter marketing
+  // m: [ym, date, camp_idx, mc_idx, spend, impressions, clicks, leads, conversions]
+  const filteredMkt = (data.marketing || []).filter(m => {
+    const ym = m[0];
+    const dt = m[1];
+    const mc_name = m[3] >= 0 ? data.mc_list[m[3]] : '';
+
+    if (f.year && !ym.startsWith(f.year)) return false;
+    if (f.month && ym.slice(5, 7) !== f.month) return false;
+    if (f.startDate && dt < f.startDate) return false;
+    if (f.endDate && dt > f.endDate) return false;
+
+    if (f.mktChannel && mc_name) {
+      if (!mc_name.toLowerCase().includes(f.mktChannel.toLowerCase())) return false;
+    }
+
+    return true;
+  });
+
+  return {
+    sales: filteredSales,
+    marketing: filteredMkt,
+    data: data
+  };
+}
+
+// Global Filter Reset
+function clearFilters() {
+  AppState.filters = {
+    year: '',
+    month: '',
+    startDate: '2024-01-01',
+    endDate: '2026-08-31',
+    category: '',
+    region: '',
+    salesChannel: '',
+    mktChannel: ''
+  };
+
+  document.getElementById('filter-year').value = '';
+  document.getElementById('filter-month').value = '';
+  document.getElementById('filter-start-date').value = '2024-01-01';
+  document.getElementById('filter-end-date').value = '2026-08-31';
+  document.getElementById('filter-category').value = '';
+  document.getElementById('filter-region').value = '';
+  document.getElementById('filter-sales-channel').value = '';
+  document.getElementById('filter-mkt-channel').value = '';
+
+  renderActivePage();
+}
+
+// Router & Page Switcher
+function setPage(pageId) {
+  AppState.activePage = pageId;
+  
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.page === pageId);
+  });
+
+  document.querySelectorAll('.page-section').forEach(sec => {
+    sec.classList.toggle('active', sec.id === `page-${pageId}`);
+  });
+
+  renderActivePage();
+}
+
+// Initialization & Listeners
+document.addEventListener('DOMContentLoaded', () => {
+  // Navigation buttons
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const targetPage = e.currentTarget.dataset.page;
+      setPage(targetPage);
+    });
+  });
+
+  // Filter change listeners
+  const filterInputs = [
+    'filter-year', 'filter-month', 'filter-start-date', 'filter-end-date',
+    'filter-category', 'filter-region', 'filter-sales-channel', 'filter-mkt-channel'
+  ];
+
+  filterInputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', (e) => {
+        const fieldMap = {
+          'filter-year': 'year',
+          'filter-month': 'month',
+          'filter-start-date': 'startDate',
+          'filter-end-date': 'endDate',
+          'filter-category': 'category',
+          'filter-region': 'region',
+          'filter-sales-channel': 'salesChannel',
+          'filter-mkt-channel': 'mktChannel'
+        };
+        AppState.filters[fieldMap[id]] = e.target.value;
+        renderActivePage();
+      });
+    }
+  });
+
+  // Initial Render
+  renderActivePage();
+});
+</script>

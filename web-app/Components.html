@@ -1,0 +1,418 @@
+<script>
+/**
+ * Component & View Renderer Module
+ * Dashboard Web de Vendas e Marketing
+ */
+
+function renderActivePage() {
+  const { sales, marketing, data } = getFilteredData();
+  const page = AppState.activePage;
+
+  if (page === 'visao-geral') {
+    renderPageVisaoGeral(sales, marketing, data);
+  } else if (page === 'marketing') {
+    renderPageMarketing(sales, marketing, data);
+  } else if (page === 'vendas-clientes') {
+    renderPageVendasClientes(sales, marketing, data);
+  } else if (page === 'produtos-categorias') {
+    renderPageProdutosCategorias(sales, marketing, data);
+  }
+}
+
+// ----------------------------------------------------
+// PÁGINA 1: DESEMPENHO DE VENDAS E MARKETING
+// ----------------------------------------------------
+function renderPageVisaoGeral(sales, marketing, data) {
+  // Aggregate KPIs
+  let revenue = 0, cost = 0, spend = 0, conversions = 0, attributedRevenue = 0;
+  
+  sales.forEach(s => {
+    revenue += s[6];
+    cost += s[7];
+    if (s[5] >= 0) attributedRevenue += s[6];
+  });
+
+  marketing.forEach(m => {
+    spend += m[4];
+    conversions += m[8];
+  });
+
+  const grossProfit = revenue - cost;
+  const margin = revenue > 0 ? grossProfit / revenue : 0;
+  const roas = spend > 0 ? attributedRevenue / spend : 0;
+
+  // Render KPI Cards
+  document.getElementById('kpi-p1-revenue').innerText = formatCurrency(revenue);
+  document.getElementById('kpi-p1-margin').innerText = formatPercent(margin);
+  document.getElementById('kpi-p1-spend').innerText = formatCurrency(spend);
+  document.getElementById('kpi-p1-conversions').innerText = formatNumber(conversions);
+  document.getElementById('kpi-p1-roas').innerText = formatDecimal(roas, 2);
+
+  // Monthly Evolution Data
+  const monthlyMap = {};
+  sales.forEach(s => {
+    const ym = s[0];
+    if (!monthlyMap[ym]) monthlyMap[ym] = { monthLabel: ym, revenue: 0, spend: 0 };
+    monthlyMap[ym].revenue += s[6];
+  });
+  marketing.forEach(m => {
+    const ym = m[0];
+    if (!monthlyMap[ym]) monthlyMap[ym] = { monthLabel: ym, revenue: 0, spend: 0 };
+    monthlyMap[ym].spend += m[4];
+  });
+
+  const monthlyList = Object.keys(monthlyMap).sort().map(ym => monthlyMap[ym]);
+  renderComboRevenueInvestment('chart-p1-evolution', monthlyList);
+
+  // Receita por Categoria
+  const catMap = {};
+  sales.forEach(s => {
+    const cat = data.products[data.prod_list[s[2]]]?.category || 'Outros';
+    catMap[cat] = (catMap[cat] || 0) + s[6];
+  });
+  const sortedCat = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
+  renderBarChart('chart-p1-category', sortedCat.map(c => c[0]), sortedCat.map(c => c[1]), { horizontal: true, datasetLabel: 'Receita' });
+
+  // Receita por Canal de Venda
+  const scMap = {};
+  sales.forEach(s => {
+    const sc = data.sc_list[s[4]];
+    scMap[sc] = (scMap[sc] || 0) + s[6];
+  });
+  const sortedSc = Object.entries(scMap).sort((a, b) => b[1] - a[1]);
+  renderBarChart('chart-p1-sales-channel', sortedSc.map(c => c[0]), sortedSc.map(c => c[1]), { horizontal: false, datasetLabel: 'Receita', color: '#1E3A8A' });
+}
+
+// ----------------------------------------------------
+// PÁGINA 2: DESEMPENHO DE MARKETING
+// ----------------------------------------------------
+function renderPageMarketing(sales, marketing, data) {
+  let spend = 0, conversions = 0, leads = 0, attributedRevenue = 0;
+
+  sales.forEach(s => {
+    if (s[5] >= 0) attributedRevenue += s[6];
+  });
+
+  marketing.forEach(m => {
+    spend += m[4];
+    leads += m[7];
+    conversions += m[8];
+  });
+
+  const roas = spend > 0 ? attributedRevenue / spend : 0;
+  const cpl = leads > 0 ? spend / leads : 0;
+
+  document.getElementById('kpi-p2-spend').innerText = formatCurrency(spend);
+  document.getElementById('kpi-p2-attributed-revenue').innerText = formatCurrency(attributedRevenue);
+  document.getElementById('kpi-p2-roas').innerText = formatDecimal(roas, 2);
+  document.getElementById('kpi-p2-conversions').innerText = formatNumber(conversions);
+  document.getElementById('kpi-p2-cpl').innerText = formatCurrency(cpl);
+
+  // Campanhas Map
+  const campMap = {};
+  marketing.forEach(m => {
+    const camp_id = m[2] >= 0 ? data.camp_list[m[2]] : null;
+    if (!camp_id) return;
+    const c_name = data.campaigns[camp_id]?.name || camp_id;
+    if (!campMap[camp_id]) {
+      campMap[camp_id] = { name: c_name, spend: 0, attributedRev: 0 };
+    }
+    campMap[camp_id].spend += m[4];
+  });
+
+  sales.forEach(s => {
+    const camp_id = s[5] >= 0 ? data.camp_list[s[5]] : null;
+    if (camp_id && campMap[camp_id]) {
+      campMap[camp_id].attributedRev += s[6];
+    }
+  });
+
+  const campList = Object.values(campMap).map(c => ({
+    ...c,
+    roas: c.spend > 0 ? c.attributedRev / c.spend : 0
+  }));
+
+  // Visual 1: Receita Atribuída por Campanha (Top 10)
+  const topCampRev = [...campList].sort((a, b) => b.attributedRev - a.attributedRev).slice(0, 10);
+  renderBarChart('chart-p2-camp-revenue', topCampRev.map(c => c.name), topCampRev.map(c => c.attributedRev), { horizontal: true, datasetLabel: 'Receita Atribuída', color: '#0A2540' });
+
+  // Visual 2: Eficiência das Campanhas - ROAS (Top 10)
+  const topCampRoas = [...campList].sort((a, b) => b.roas - a.roas).slice(0, 10);
+  renderBarChart('chart-p2-camp-roas', topCampRoas.map(c => c.name), topCampRoas.map(c => c.roas), { horizontal: true, datasetLabel: 'ROAS', color: '#D4AF37' });
+
+  // Visual 3: Tabela Desempenho dos Canais de Marketing
+  const mktChannelMap = {};
+  data.mc_list.forEach(mc => {
+    mktChannelMap[mc] = { name: mc, spend: 0, attributedRev: 0, conversions: 0, leads: 0 };
+  });
+
+  marketing.forEach(m => {
+    const mc_name = m[3] >= 0 ? data.mc_list[m[3]] : '';
+    if (mc_name && mktChannelMap[mc_name]) {
+      mktChannelMap[mc_name].spend += m[4];
+      mktChannelMap[mc_name].leads += m[7];
+      mktChannelMap[mc_name].conversions += m[8];
+    }
+  });
+
+  sales.forEach(s => {
+    const camp_id = s[5] >= 0 ? data.camp_list[s[5]] : null;
+    if (camp_id && data.campaigns[camp_id]) {
+      const mc_id = data.campaigns[camp_id].channel_id;
+      // Resolver mc_id → nome do canal via data.mkt_channels (ex: {MC01: 'Instagram', ...})
+      const mc_name = (data.mkt_channels && data.mkt_channels[mc_id])
+        ? data.mkt_channels[mc_id]
+        : mc_id;
+      if (mc_name && mktChannelMap[mc_name]) {
+        mktChannelMap[mc_name].attributedRev += s[6];
+      }
+    }
+  });
+
+  const tbody = document.getElementById('tbody-p2-channels');
+  if (tbody) {
+    tbody.innerHTML = Object.values(mktChannelMap).map(mc => {
+      const mcRoas = mc.spend > 0 ? mc.attributedRev / mc.spend : 0;
+      const mcCpl = mc.leads > 0 ? mc.spend / mc.leads : 0;
+      return `
+        <tr>
+          <td><strong>${mc.name}</strong></td>
+          <td>${formatCurrency(mc.spend)}</td>
+          <td>${formatCurrency(mc.attributedRev)}</td>
+          <td><strong>${formatDecimal(mcRoas, 2)}</strong></td>
+          <td>${formatNumber(mc.conversions)}</td>
+          <td>${formatCurrency(mcCpl)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Visual 4: Evolução do ROAS Mensal
+  const ymRoasMap = {};
+  sales.forEach(s => {
+    const ym = s[0];
+    if (!ymRoasMap[ym]) ymRoasMap[ym] = { rev: 0, spend: 0 };
+    if (s[5] >= 0) ymRoasMap[ym].rev += s[6];
+  });
+  marketing.forEach(m => {
+    const ym = m[0];
+    if (!ymRoasMap[ym]) ymRoasMap[ym] = { rev: 0, spend: 0 };
+    ymRoasMap[ym].spend += m[4];
+  });
+
+  const sortedYm = Object.keys(ymRoasMap).sort();
+  const roasSeries = sortedYm.map(ym => ymRoasMap[ym].spend > 0 ? ymRoasMap[ym].rev / ymRoasMap[ym].spend : 0);
+
+  renderLineChart('chart-p2-roas-evolution', sortedYm, roasSeries, 'ROAS', false, '#D4AF37');
+}
+
+// ----------------------------------------------------
+// PÁGINA 3: VENDAS E CLIENTES
+// ----------------------------------------------------
+function renderPageVendasClientes(sales, marketing, data) {
+  let revenue = 0, cost = 0, totalQty = 0;
+  const activeCustomers = new Set();
+
+  sales.forEach(s => {
+    revenue += s[6];
+    cost += s[7];
+    totalQty += s[8];
+    if (s[3] >= 0) activeCustomers.add(s[3]);
+  });
+
+  const grossProfit = revenue - cost;
+  const margin = revenue > 0 ? grossProfit / revenue : 0;
+  const transactions = sales.length;
+  const ticketMedio = transactions > 0 ? revenue / transactions : 0;
+
+  document.getElementById('kpi-p3-revenue').innerText = formatCurrency(revenue);
+  document.getElementById('kpi-p3-quantity').innerText = formatNumber(totalQty);
+  document.getElementById('kpi-p3-ticket').innerText = formatCurrency(ticketMedio);
+  document.getElementById('kpi-p3-active-customers').innerText = formatNumber(activeCustomers.size);
+  document.getElementById('kpi-p3-margin').innerText = formatPercent(margin);
+
+  // Visual 1: Evolução da Receita
+  const ymRevMap = {};
+  sales.forEach(s => {
+    const ym = s[0];
+    ymRevMap[ym] = (ymRevMap[ym] || 0) + s[6];
+  });
+  const sortedYm = Object.keys(ymRevMap).sort();
+  renderLineChart('chart-p3-revenue-evolution', sortedYm, sortedYm.map(ym => ymRevMap[ym]), 'Receita Total', true, '#0A2540');
+
+  // Visual 2: Receita por Região
+  const regMap = {};
+  sales.forEach(s => {
+    const reg = data.customers[data.cli_list[s[3]]]?.region || 'Outros';
+    regMap[reg] = (regMap[reg] || 0) + s[6];
+  });
+  const sortedReg = Object.entries(regMap).sort((a, b) => b[1] - a[1]);
+  renderBarChart('chart-p3-region', sortedReg.map(r => r[0]), sortedReg.map(r => r[1]), { horizontal: true, datasetLabel: 'Receita', color: '#1E3A8A' });
+
+  // Customer Aggregation
+  const custAgg = {};
+  sales.forEach(s => {
+    const cid = s[3];
+    const c_name = data.customers[data.cli_list[cid]]?.name || `Cliente ${cid}`;
+    if (!custAgg[cid]) {
+      custAgg[cid] = { id: cid, name: c_name, rev: 0, cost: 0, qty: 0, txs: 0 };
+    }
+    custAgg[cid].rev += s[6];
+    custAgg[cid].cost += s[7];
+    custAgg[cid].qty += s[8];
+    custAgg[cid].txs += 1;
+  });
+
+  const custList = Object.values(custAgg).map(c => ({
+    ...c,
+    grossProfit: c.rev - c.cost,
+    margin: c.rev > 0 ? (c.rev - c.cost) / c.rev : 0,
+    ticket: c.txs > 0 ? c.rev / c.txs : 0
+  }));
+
+  // Visual 3: Top 10 Clientes por Receita (Bar Chart)
+  const top10Cust = [...custList].sort((a, b) => b.rev - a.rev).slice(0, 10);
+  renderBarChart('chart-p3-top-customers', top10Cust.map(c => c.name), top10Cust.map(c => c.rev), { horizontal: true, datasetLabel: 'Receita', color: '#0A2540' });
+
+  // Visual 4: Tabela de Clientes Detailed
+  const tbody = document.getElementById('tbody-p3-customers');
+  if (tbody) {
+    tbody.innerHTML = custList.sort((a, b) => b.rev - a.rev).slice(0, 10).map(c => `
+      <tr>
+        <td><strong>${c.name}</strong></td>
+        <td>${formatCurrency(c.rev)}</td>
+        <td>${formatNumber(c.qty)}</td>
+        <td>${formatCurrency(c.grossProfit)}</td>
+        <td><strong>${formatPercent(c.margin)}</strong></td>
+      </tr>
+    `).join('');
+  }
+}
+
+// ----------------------------------------------------
+// PÁGINA 4: PRODUTOS E CATEGORIAS
+// ----------------------------------------------------
+function renderPageProdutosCategorias(sales, marketing, data) {
+  let revenue = 0, cost = 0, totalQty = 0;
+  const activeProducts = new Set();
+
+  sales.forEach(s => {
+    revenue += s[6];
+    cost += s[7];
+    totalQty += s[8];
+    if (s[2] >= 0) activeProducts.add(s[2]);
+  });
+
+  const grossProfit = revenue - cost;
+  const margin = revenue > 0 ? grossProfit / revenue : 0;
+
+  document.getElementById('kpi-p4-revenue').innerText = formatCurrency(revenue);
+  document.getElementById('kpi-p4-quantity').innerText = formatNumber(totalQty);
+  document.getElementById('kpi-p4-gross-profit').innerText = formatCurrency(grossProfit);
+  document.getElementById('kpi-p4-margin').innerText = formatPercent(margin);
+  document.getElementById('kpi-p4-products').innerText = formatNumber(activeProducts.size);
+
+  // Product Aggregation
+  const prodAgg = {};
+  sales.forEach(s => {
+    const pid = s[2];
+    const p_info = data.products[data.prod_list[pid]];
+    const p_name = p_info?.name || `Produto ${pid}`;
+    const p_cat = p_info?.category || 'Outros';
+
+    if (!prodAgg[pid]) {
+      prodAgg[pid] = { id: pid, name: p_name, category: p_cat, rev: 0, cost: 0, qty: 0 };
+    }
+    prodAgg[pid].rev += s[6];
+    prodAgg[pid].cost += s[7];
+    prodAgg[pid].qty += s[8];
+  });
+
+  const prodList = Object.values(prodAgg).map(p => ({
+    ...p,
+    grossProfit: p.rev - p.cost,
+    margin: p.rev > 0 ? (p.rev - p.cost) / p.rev : 0
+  }));
+
+  // Calculate Average Revenue across active products for Quadrant Classification
+  const avgProductRevenue = prodList.length > 0 ? prodList.reduce((acc, p) => acc + p.rev, 0) / prodList.length : 0;
+  const overallMarginRef = 0.2881; // 28.81% reference margin
+
+  prodList.forEach(p => {
+    if (p.rev >= avgProductRevenue && p.margin >= overallMarginRef) {
+      p.class = 'Estratégico';
+    } else if (p.rev >= avgProductRevenue && p.margin < overallMarginRef) {
+      p.class = 'Otimização';
+    } else if (p.rev < avgProductRevenue && p.margin >= overallMarginRef) {
+      p.class = 'Oportunidade';
+    } else {
+      p.class = 'Avaliação';
+    }
+  });
+
+  // Visual 1: Scatter / Bubble Chart
+  const scatterPoints = prodList.map(p => ({
+    x: p.rev,
+    y: p.margin,
+    r: Math.max(5, Math.min(25, Math.sqrt(p.qty) * 0.25)),
+    name: p.name,
+    category: p.category,
+    qty: p.qty,
+    grossProfit: p.grossProfit,
+    class: p.class
+  }));
+  renderScatterChart('chart-p4-scatter', scatterPoints);
+
+  // Visual 2: Receita por Categoria
+  const catRevMap = {};
+  prodList.forEach(p => {
+    catRevMap[p.category] = (catRevMap[p.category] || 0) + p.rev;
+  });
+  const sortedCatRev = Object.entries(catRevMap).sort((a, b) => b[1] - a[1]);
+  renderBarChart('chart-p4-cat-revenue', sortedCatRev.map(c => c[0]), sortedCatRev.map(c => c[1]), { horizontal: true, datasetLabel: 'Receita', color: '#0A2540' });
+
+  // Visual 3: Margem Bruta por Categoria (Com linha de referência 28.81%)
+  const catProfitMap = {}, catCostMap = {};
+  prodList.forEach(p => {
+    catProfitMap[p.category] = (catProfitMap[p.category] || 0) + p.rev;
+    catCostMap[p.category] = (catCostMap[p.category] || 0) + p.cost;
+  });
+  const catMarginList = Object.keys(catProfitMap).map(cat => {
+    const catRev = catProfitMap[cat];
+    const catCost = catCostMap[cat];
+    const catMargin = catRev > 0 ? (catRev - catCost) / catRev : 0;
+    return { category: cat, margin: catMargin };
+  }).sort((a, b) => b.margin - a.margin);
+
+  renderBarChart('chart-p4-cat-margin', catMarginList.map(c => c.category), catMarginList.map(c => c.margin), {
+    horizontal: false,
+    isPercent: true,
+    datasetLabel: 'Margem Bruta',
+    color: '#D4AF37',
+    refLine: 0.2881
+  });
+
+  // Top 10 Produtos Highlight & Table
+  const sortedProds = [...prodList].sort((a, b) => b.rev - a.rev);
+  const top10Prods = sortedProds.slice(0, 10);
+  const top10Revenue = top10Prods.reduce((acc, p) => acc + p.rev, 0);
+  const top10Percent = revenue > 0 ? top10Revenue / revenue : 0;
+
+  document.getElementById('top10-prod-rev').innerText = formatCurrency(top10Revenue);
+  document.getElementById('top10-prod-pct').innerText = formatPercent(top10Percent);
+
+  const tbody = document.getElementById('tbody-p4-top10');
+  if (tbody) {
+    tbody.innerHTML = top10Prods.map(p => `
+      <tr>
+        <td><strong>${p.name}</strong></td>
+        <td>${formatCurrency(p.rev)}</td>
+        <td>${formatNumber(p.qty)}</td>
+        <td>${formatCurrency(p.grossProfit)}</td>
+        <td><strong>${formatPercent(p.margin)}</strong></td>
+        <td><span class="badge badge-${p.class.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')}">${p.class}</span></td>
+      </tr>
+    `).join('');
+  }
+}
+</script>

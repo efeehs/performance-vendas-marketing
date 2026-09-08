@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Web — Desempenho de Vendas e Marketing</title>
+  
+  <!-- Fontes & Chart.js -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <?!= include('Styles'); ?>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-container">
+        <div class="brand-logo">G</div>
+        <div>
+          <h1 class="brand-title">Global Beverage Imports</h1>
+          <p class="brand-subtitle">Performance Analítica de Vendas e Marketing</p>
+        </div>
+      </div>
+      <div class="header-status">
+        <span class="period-badge">Período Analisado: 01/01/2024 a 31/08/2026</span>
+      </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="app-nav">
+      <button class="nav-item active" data-page="visao-geral">Visão Geral</button>
+      <button class="nav-item" data-page="marketing">Marketing</button>
+      <button class="nav-item" data-page="vendas-clientes">Vendas e Clientes</button>
+      <button class="nav-item" data-page="produtos-categorias">Produtos e Categorias</button>
+    </nav>
+
+    <!-- App Body (Main Content + Right Filter Sidebar) -->
+    <div class="app-body">
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <!-- PÁGINA 1: VISÃO GERAL -->
+        <section id="page-visao-geral" class="page-section active">
+          <div class="kpi-grid">
+            <div class="kpi-card accent-gold">
+              <div class="kpi-title">Receita Total</div>
+              <div class="kpi-value" id="kpi-p1-revenue">R$ 0,00</div>
+              <div class="kpi-subtext">Faturamento bruto consolidado</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Margem Bruta</div>
+              <div class="kpi-value" id="kpi-p1-margin">0,00%</div>
+              <div class="kpi-subtext">Lucro Bruto / Receita</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Investimento Mkt</div>
+              <div class="kpi-value" id="kpi-p1-spend">R$ 0,00</div>
+              <div class="kpi-subtext">Verba alocada em campanhas</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Conversões</div>
+              <div class="kpi-value" id="kpi-p1-conversions">0</div>
+              <div class="kpi-subtext">Vendas originadas do Marketing</div>
+            </div>
+            <div class="kpi-card accent-gold">
+              <div class="kpi-title">ROAS</div>
+              <div class="kpi-value" id="kpi-p1-roas">0,00</div>
+              <div class="kpi-subtext">Receita Atribuída / Investimento</div>
+            </div>
+          </div>
+
+          <div class="chart-card" style="height: 380px;">
+            <div class="chart-header">
+              <div>
+                <h2 class="chart-title">Evolução da Receita e do Investimento em Marketing</h2>
+                <p class="chart-subtitle">Análise temporal mensal (Jan/2024 a Ago/2026)</p>
+              </div>
+            </div>
+            <div class="chart-body">
+              <canvas id="chart-p1-evolution"></canvas>
+            </div>
+          </div>
+
+          <div class="grid-2col">
+            <div class="chart-card" style="height: 350px;">
+              <div class="chart-header">
+                <h2 class="chart-title">Receita por Categoria</h2>
+              </div>
+              <div class="chart-body">
+                <canvas id="chart-p1-category"></canvas>
+              </div>
+            </div>
+            <div class="chart-card" style="height: 350px;">
+              <div class="chart-header">
+                <h2 class="chart-title">Receita por Canal de Venda</h2>
+              </div>
+              <div class="chart-body">
+                <canvas id="chart-p1-sales-channel"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PÁGINA 2: MARKETING -->
+        <section id="page-marketing" class="page-section">
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-title">Investimento Mkt</div>
+              <div class="kpi-value" id="kpi-p2-spend">R$ 0,00</div>
+              <div class="kpi-subtext">Investimento total em mídias</div>
+            </div>
+            <div class="kpi-card accent-gold">
+              <div class="kpi-title">Receita Atribuída</div>
+              <div class="kpi-value" id="kpi-p2-attributed-revenue">R$ 0,00</div>
+              <div class="kpi-subtext">Receita gerada por campanhas</div>
+            </div>
+            <div class="kpi-card accent-gold">
+              <div class="kpi-title">ROAS</div>
+              <div class="kpi-value" id="kpi-p2-roas">0,00</div>
+              <div class="kpi-subtext">Retorno sobre investimento mkt</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Conversões</div>
+              <div class="kpi-value" id="kpi-p2-conversions">0</div>
+              <div class="kpi-subtext">Total de vendas convertidas</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">CPL</div>
+              <div class="kpi-value" id="kpi-p2-cpl">R$ 0,00</div>
+              <div class="kpi-subtext">Custo por Lead</div>
+            </div>
+          </div>
+
+          <div class="grid-2col">
+            <div class="chart-card" style="height: 380px;">
+              <div class="chart-header">
+                <h2 class="chart-title">Receita Atribuída por Campanha (Top 10)</h2>
+              </div>
+              <div class="chart-body">
+                <canvas id="chart-p2-camp-revenue"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card" style="height: 380px;">
+              <div class="chart-header">
+                <h2 class="chart-title">Eficiência das Campanhas — ROAS (Top 10)</h2>
+              </div>
+              <div class="chart-body">
+                <canvas id="chart-p2-camp-roas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-card" style="height: 350px;">
+            <div class="chart-header">
+              <h2 class="chart-title">Evolução Mensal do ROAS</h2>
+            </div>
+            <div class="chart-body">
+              <canvas id="chart-p2-roas-evolution"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h2 class="chart-title">Desempenho dos Canais de Marketing</h2>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Canal de Marketing</th>
+                    <th>Investimento</th>
+                    <th>Receita Atribuída</th>
+                    <th>ROAS</th>
+                    <th>Conversões</th>
+                    <th>CPL</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-p2-channels"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- PÁGINA 3: VENDAS E CLIENTES -->
+        <section id="page-vendas-clientes" class="page-section">
+          <div class="kpi-grid">
+            <div class="kpi-card accent-gold">
+              <div class="kpi-title">Receita Total</div>
+              <div class="kpi-value" id="kpi-p3-revenue">R$ 0,00</div>
+              <div class="kpi-subtext">Faturamento bruto</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Quantidade Vendida</div>
+              <div class="kpi-value" id="kpi-p3-quantity">0</div>
+              <div class="kpi-subtext">Volume de unidades</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Ticket Médio</div>
+              <div class="kpi-value" id="kpi-p3-ticket">R$ 0,00</div>
+              <div class="kpi-subtext">Receita por transação</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Clientes Ativos</div>
+              <div class="kpi-value" id="kpi-p3-active-customers">0</div>
+              <div class="kpi-subtext">Compradores no período</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Margem Bruta</div>
+              <div class="kpi-value" id="kpi-p3-margin">0,00%</div>
+              <div class="kpi-subtext">Lucratividade de vendas</div>
+            </div>
+          </div>
+
+          <div class="chart-card" style="height: 350px;">
+            <div class="chart-header">
+              <h2 class="chart-title">Evolução da Receita Mensal</h2>
+            </div>
+            <div class="chart-body">
+              <canvas id="chart-p3-revenue-evolution"></canvas>
+            </div>
+          </div>
+
+          <div class="grid-2col">
+            <div class="chart-card" style="height: 380px;">
+              <div class="chart-header">
+                <h2 class="chart-title">Receita por Região</h2>
+              </div>
+              <div class="chart-body">
+                <canvas id="chart-p3-region"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card" style="height: 380px;">
+              <div class="chart-header">
+                <h2 class="chart-title">Top 10 Clientes por Receita</h2>
+              </div>
+              <div class="chart-body">
+                <canvas id="chart-p3-top-customers"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h2 class="chart-title">Tabela de Clientes</h2>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Receita</th>
+                    <th>Qtd Vendida</th>
+                    <th>Lucro Bruto</th>
+                    <th>Margem Bruta</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-p3-customers"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- PÁGINA 4: PRODUTOS E CATEGORIAS -->
+        <section id="page-produtos-categorias" class="page-section">
+          <div class="kpi-grid">
+            <div class="kpi-card accent-gold">
+              <div class="kpi-title">Receita Total</div>
+              <div class="kpi-value" id="kpi-p4-revenue">R$ 0,00</div>
+              <div class="kpi-subtext">Faturamento do portfólio</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Quantidade Vendida</div>
+              <div class="kpi-value" id="kpi-p4-quantity">0</div>
+              <div class="kpi-subtext">Total de garrafas/unidades</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Lucro Bruto</div>
+              <div class="kpi-value" id="kpi-p4-gross-profit">R$ 0,00</div>
+              <div class="kpi-subtext">Receita (-) Custo dos produtos</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Margem Bruta</div>
+              <div class="kpi-value" id="kpi-p4-margin">0,00%</div>
+              <div class="kpi-subtext">Percentual de lucro bruto</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Produtos Vendidos</div>
+              <div class="kpi-value" id="kpi-p4-products">0</div>
+              <div class="kpi-subtext">SKUs ativos no período</div>
+            </div>
+          </div>
+
+          <!-- Scatter / Bubble Chart -->
+          <div class="chart-card" style="height: 420px;">
+            <div class="chart-header">
+              <div>
+                <h2 class="chart-title">Matriz de Produtos: Receita × Margem Bruta × Volume</h2>
+                <p class="chart-subtitle">Classificação em Estratégico, Otimização, Oportunidade e Avaliação (Tamanho do círculo = Qtd Vendida)</p>
+              </div>
+            </div>
+            <div class="chart-body">
+              <canvas id="chart-p4-scatter"></canvas>
+            </div>
+          </div>
+
+          <div class="grid-2col">
+            <div class="chart-card" style="height: 380px;">
+              <div class="chart-header">
+                <h2 class="chart-title">Receita por Categoria</h2>
+              </div>
+              <div class="chart-body">
+                <canvas id="chart-p4-cat-revenue"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card" style="height: 380px;">
+              <div class="chart-header">
+                <div>
+                  <h2 class="chart-title">Margem Bruta por Categoria</h2>
+                  <p class="chart-subtitle">Linha vermelha tracejada: Margem Geral de Reference (28,81%)</p>
+                </div>
+              </div>
+              <div class="chart-body">
+                <canvas id="chart-p4-cat-margin"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top 10 Highlight & Table -->
+          <div class="top10-highlight">
+            <div class="top10-stat">
+              <div class="top10-stat-val" id="top10-prod-rev">R$ 0,00</div>
+              <div class="top10-stat-lbl">Receita dos Top 10 Produtos</div>
+            </div>
+            <div class="top10-stat">
+              <div class="top10-stat-val" id="top10-prod-pct">0,00%</div>
+              <div class="top10-stat-lbl">Participação na Receita Total</div>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h2 class="chart-title">Tabela dos Top 10 Produtos</h2>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Receita</th>
+                    <th>Qtd Vendida</th>
+                    <th>Lucro Bruto</th>
+                    <th>Margem Bruta</th>
+                    <th>Classificação</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-p4-top10"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Right Filter Sidebar Panel -->
+      <aside class="filter-sidebar">
+        <h3 class="sidebar-title">Filtros Globais</h3>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-start-date">Data Inicial</label>
+          <input type="date" id="filter-start-date" class="filter-input" value="2024-01-01" min="2024-01-01" max="2026-08-31">
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-end-date">Data Final</label>
+          <input type="date" id="filter-end-date" class="filter-input" value="2026-08-31" min="2024-01-01" max="2026-08-31">
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-year">Ano</label>
+          <select id="filter-year" class="filter-select">
+            <option value="">Todos os Anos</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-month">Mês</label>
+          <select id="filter-month" class="filter-select">
+            <option value="">Todos os Meses</option>
+            <option value="01">Janeiro</option>
+            <option value="02">Fevereiro</option>
+            <option value="03">Março</option>
+            <option value="04">Abril</option>
+            <option value="05">Maio</option>
+            <option value="06">Junho</option>
+            <option value="07">Julho</option>
+            <option value="08">Agosto</option>
+            <option value="09">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-category">Categoria</label>
+          <select id="filter-category" class="filter-select">
+            <option value="">Todas as Categorias</option>
+            <option value="Whisky">Whisky</option>
+            <option value="Vinhos">Vinhos</option>
+            <option value="Espumantes">Espumantes</option>
+            <option value="Rum">Rum</option>
+            <option value="Gin">Gin</option>
+            <option value="Vodka">Vodka</option>
+            <option value="Cervejas Premium">Cervejas Premium</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-region">Região</label>
+          <select id="filter-region" class="filter-select">
+            <option value="">Todas as Regiões</option>
+            <option value="Norte">Norte</option>
+            <option value="Nordeste">Nordeste</option>
+            <option value="Centro-Oeste">Centro-Oeste</option>
+            <option value="Sudeste">Sudeste</option>
+            <option value="Sul">Sul</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-sales-channel">Canal de Venda</label>
+          <select id="filter-sales-channel" class="filter-select">
+            <option value="">Todos os Canais</option>
+            <option value="Distribuidor">Distribuidor</option>
+            <option value="E-commerce">E-commerce</option>
+            <option value="Food Service">Food Service</option>
+            <option value="Varejo">Varejo</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-mkt-channel">Canal de Mkt</label>
+          <select id="filter-mkt-channel" class="filter-select">
+            <option value="">Todos os Canais Mkt</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Influenciadores">Influenciadores</option>
+            <option value="Eventos">Eventos</option>
+            <option value="Google Ads">Google Ads</option>
+            <option value="YouTube">YouTube</option>
+            <option value="E-mail Marketing">E-mail Marketing</option>
+          </select>
+        </div>
+
+        <button class="btn-clear-filters" onclick="clearFilters()">Limpar Filtros</button>
+      </aside>
+    </div>
+  </div>
+
+  <?!= include('Data'); ?>
+  <?!= include('Charts'); ?>
+  <?!= include('Components'); ?>
+  <?!= include('Scripts'); ?>
+</body>
+</html>
