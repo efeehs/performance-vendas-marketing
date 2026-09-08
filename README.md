@@ -86,7 +86,7 @@ Análise do desempenho comercial, evolução da receita, distribuição geográf
 
 Análise do portfólio considerando receita, volume e rentabilidade, incluindo uma matriz para classificação dos produtos em Estratégico, Otimização, Oportunidade e Avaliação.
 
-![Dashboard - Produtos e Categorias](docs/produtos-categorias.png)
+
 
 --
 
