@@ -4,6 +4,8 @@ Projeto de análise de dados desenvolvido para simular uma operação de vendas 
 
 A solução foi construída com dados sintéticos gerados em Python e contempla desde a estruturação e validação dos dados até a modelagem, criação de indicadores em DAX, desenvolvimento do dashboard em Power BI e análise dos resultados.
 
+Como extensão da solução, também foi desenvolvida uma versão web interativa utilizando Google Apps Script, HTML, CSS, JavaScript e Chart.js.
+
 O objetivo principal do projeto é demonstrar a construção de uma solução analítica orientada a perguntas de negócio, integrando informações de vendas, clientes, produtos e marketing.
 
 ---
@@ -58,10 +60,10 @@ Entre as principais:
 | Google Colab | Desenvolvimento do processo de geração dos dados |
 | Power BI | Modelagem, análise e visualização |
 | DAX | Construção das medidas e regras analíticas |
-| GitHub | Versionamento e documentação |
-| Google Apps Script | Desenvolvimento da versão web |
-| HTML / CSS / JavaScript | Interface da aplicação web |
+| Google Apps Script | Desenvolvimento e publicação da aplicação web |
+| HTML / CSS / JavaScript | Interface e interatividade da aplicação web |
 | Chart.js | Visualizações da aplicação web |
+| GitHub | Versionamento e documentação |
 
 ---
 
@@ -87,6 +89,8 @@ Criação das medidas em DAX
 Desenvolvimento dos dashboards
           ↓
 Análise e interpretação dos resultados
+          ↓
+Desenvolvimento da aplicação web
 ```
 
 A estrutura dos dados foi definida a partir das necessidades analíticas do projeto. Dessa forma, as informações foram geradas considerando previamente quais dimensões, métricas e relações seriam necessárias para responder às perguntas de negócio.
@@ -148,7 +152,7 @@ As medidas são calculadas de acordo com o contexto de filtro do relatório, per
 
 # Dashboard Power BI
 
-O dashboard foi organizado em quatro páginas, cada uma direcionada a uma pergunta analítica diferente.
+O dashboard foi organizado em quatro páginas, cada uma direcionada a uma perspectiva e a uma pergunta analítica diferente.
 
 ## 1. Visão Geral
 
@@ -215,7 +219,7 @@ Essa estrutura permite diferenciar volume de resultado e eficiência. Uma campan
 
 > Quem compra, quanto compra e onde estão as vendas?
 
-Essa página concentra a análise comercial e do comportamento da carteira de clientes.
+Essa página concentra a análise comercial e da carteira de clientes.
 
 ### Principais KPIs
 
@@ -432,23 +436,23 @@ A utilização de dados sintéticos permitiu desenvolver o projeto de ponta a po
 
 Por se tratar de um projeto de portfólio construído com dados sintéticos, algumas limitações devem ser consideradas.
 
-### Dados sintéticos
+## Dados Sintéticos
 
 Os resultados representam exclusivamente o cenário simulado e não devem ser interpretados como comportamento real do mercado de bebidas.
 
-### Conversões
+## Conversões
 
 A base registra conversões como ações de sucesso associadas às campanhas, porém não detalha uma jornada individual completa entre lead, conversão, cliente e venda.
 
-Uma evolução do projeto seria estruturar esse funil de forma mais granular, permitindo acompanhar a jornada de aquisição e avaliar com maior profundidade a qualidade dos leads.
+Uma estrutura de funil mais granular permitiria acompanhar a jornada de aquisição e avaliar com maior profundidade a qualidade dos leads.
 
-### Receita Atribuída
+## Receita Atribuída
 
 Receita atribuída representa vendas associadas às campanhas segundo a regra utilizada na base sintética.
 
 A associação não representa, por si só, evidência de causalidade entre a campanha e a venda.
 
-### ROAS e ROI
+## ROAS e ROI
 
 O projeto utiliza ROAS para avaliar a relação entre receita atribuída e investimento em marketing:
 
@@ -464,7 +468,7 @@ Um cálculo financeiro completo de ROI exigiria uma definição mais abrangente 
 
 # Aplicação Web
 
-Além do dashboard em Power BI, está sendo desenvolvida uma versão web interativa utilizando:
+Além do dashboard desenvolvido em Power BI, o projeto possui uma versão web interativa desenvolvida com:
 
 - Google Apps Script;
 - HTML;
@@ -472,17 +476,19 @@ Além do dashboard em Power BI, está sendo desenvolvida uma versão web interat
 - JavaScript;
 - Chart.js.
 
-A aplicação replica as quatro perspectivas principais do dashboard e possui:
+A aplicação reproduz as quatro perspectivas analíticas do dashboard:
 
-- KPIs dinâmicos;
-- filtros interativos;
-- gráficos;
-- tabelas detalhadas;
-- navegação entre as áreas analíticas.
+- Visão Geral;
+- Marketing;
+- Vendas e Clientes;
+- Produtos e Categorias.
 
-**Status:** Em desenvolvimento.
+A versão web possui KPIs dinâmicos, filtros interativos, gráficos, tabelas detalhadas e navegação entre as áreas analíticas.
 
-A estrutura principal encontra-se funcional e o projeto está em etapa de refinamento e validação.
+**Status:** Concluído
+
+**Acessar aplicação:**  
+[Dashboard Web — Performance de Vendas e Marketing](https://script.google.com/macros/s/AKfycbzd3SQLqyjBbKN-DAd3odE9AqfZJ60TG3d_prOM9OuZYRjwMl8Yu8wKs5XBqsrvcBC-/exec)
 
 ---
 
